@@ -51,7 +51,7 @@ src/
   components/ui.tsx        Button, Field, Input, Select, Chip, Modal, Drawer, Tabs, Toggle, StatTile, AlertBanner, EmptyState, ...
   components/Shell.tsx     sidebar + header (search, branch, alerts, family requests, profile menu)
   components/VisitActions.tsx  AssignModal, CancelModal, ChangeTimeModal, NewVisitsModal (shared)
-  pages/                   one file per menu item + ReferralDetail, ClientDetail, Auth
+  pages/                   one file per menu item + ReferralDetail, ClientDetail, VisitDetail, CaregiverDetail, IncidentDetail, Auth
 ```
 
 ## Demo data
@@ -59,6 +59,15 @@ All data is sample data in `src/data/seed.ts`. Every change is saved in **sessio
 
 ## Demo sign-in
 Any email and any password → **Sign in** → security code **246810** → **Verify and sign in**. Opens **My work**.
+
+## Detail screens (never side panels)
+Every record opens on its **own full screen** with a back link to where you came from (`?from=`). Only small decisions (a reason, a confirmation, change time, cancel) use a pop-up.
+- **Visit** `/visits/:id` (`VisitDetail.tsx`) — opened from Cover needed, Today's visits, Schedule, My work, a client, a caregiver, an incident or a family request. Shows: status and live state, caregiver (or **Find a caregiver** on the same screen — best matches first, red reasons for anyone who can't be assigned, Assign button per person; `?assign=1` opens it straight away), progress (planned → assigned → checked in → checked out), care plan tasks and instructions, notes (why not covered / what the caregiver said), client details (address, getting in, likes, emergency contact), visit details (repeats), change history. Actions: Change caregiver, Change time, Cancel visit, Keep as planned (for visits needing review).
+- **Caregiver** `/caregivers/:id` (`CaregiverDetail.tsx`) — profile (view only): numbers (visits to come, hours this week vs limit, clients they know, ready to work), tabs **Profile** (when they usually work this week, next visits, phone/type/branch/trained for, readiness — no documents or pay), **Visits** (upcoming/past, click to open), **Clients** (clients they know, visits done, last and next visit). Button: See on schedule.
+- **Incident** `/incidents/:id` (`IncidentDetail.tsx`) — progress tracker (Reported → Under review → Action required → Resolved → Closed, moved by the owner), what happened, notes and actions with an **Add note** box on the screen, who handles it (owner, target date), details with links to the client and caregiver, visits that day. Reporting an incident opens its screen.
+- **Family request** `/requests/:id` (`Requests.tsx → RequestDetail`) — their request and what they'd like, the visit they mean (opens the visit), conversation with a message box on the screen (Send message / Ask and wait for reply / Add as their reply / Send answer and close), who it's from, how requests work. Actions: Approve & … (opens the schedule step), Decline (reason).
+- **Referral** `/referrals/:id` and **Client** `/clients/:id` — as below.
+- Old links (`?open=`, `?visit=`) redirect to these screens.
 
 ## Menu and main flows
 - **My work** (`/`) — greeting banner, 4 numbers (visits today, cover needed, new family requests, my open referrals), **Needs you now** list (late check-ins, visits needing cover in the next 2 days, new family requests, care plans sent back, referral call-backs due, clients still being set up — each with an action button), today's visits, my referrals by stage, care plans to do, coming up (booked assessments). Buttons: New referral, Plan a visit.
@@ -70,12 +79,12 @@ Any email and any password → **Sign in** → security code **246810** → **Ve
   - **Documents** — upload (PDF/JPG/PNG/Word, max 10 MB, type, expiry), replace (old one kept), status Not checked / Checked / Replaced.
   - **Visits** — upcoming/past; **Plan visits** (disabled with the reason until the care plan is approved).
   - Header: Put on hold / Restart care (reason), Plan visits.
-- **Family requests** (`/requests`) — New / Waiting for family / Done. Request types: change a visit time, cancel a visit, add an extra visit, change caregiver, question. Actions: **Approve & …** (opens the schedule step), Ask a question (→ Waiting for family), Add their reply (e.g. by phone), Send a message, Decline (reason the family sees), Answer (questions).
-- **Schedule** (`/schedule`) — week board (rows: "No caregiver yet" + each caregiver) and list; filters; **Plan visits** (one-off or weekly repeat with days + until date; optional caregiver, visits they can't do stay open). Visit panel: assign/change caregiver, change time (this one or all later repeats), cancel (this one or all later repeats), keep a "needs review" visit, care plan tasks, change history.
-- **Cover needed** (`/cover`) — every upcoming visit needing attention: No caregiver, Caregiver not ready, Needs review, Late check-in. Grouped Today / Tomorrow / Next 7 days / Later. Actions: Find/Change caregiver, Cancel, Keep, **Add note** (why it's not covered yet — it stays in the list).
-- **Today's visits** (`/today`) — live: Needs you now (late, no caregiver), In progress, Coming up, Done; check-in/out times; Add update (what the caregiver said), Send someone else.
-- **Caregivers** (`/caregivers`) — view only (HR keeps records): type, trained for, usual days/hours, hours booked this week, readiness; panel with clients they know and upcoming visits.
-- **Incidents** (`/incidents`) — report an incident (client, caregiver involved, type, severity, date, what happened) → goes to the Care Supervisor; open/resolved/closed tabs; add notes.
+- **Family requests** (`/requests`) — New / Waiting for family / Done. Request types: change a visit time, cancel a visit, add an extra visit, change caregiver, question. Clicking a request opens the **request screen**.
+- **Schedule** (`/schedule`) — week board (rows: "No caregiver yet" + each caregiver) and list; filters; **Plan visits** (one-off or weekly repeat with days + until date; optional caregiver, visits they can't do stay open). Clicking a visit opens the **visit screen**.
+- **Cover needed** (`/cover`) — every upcoming visit needing attention: No caregiver, Caregiver not ready, Needs review, Late check-in. Grouped Today / Tomorrow / Next 7 days / Later. Clicking a row opens the **visit screen**; "Find caregiver" / "Send someone else" open it with the caregiver list showing; "Review" opens it for visits needing review.
+- **Today's visits** (`/today`) — live: Needs you now (late, no caregiver), In progress, Coming up, Done; check-in/out times; Add update (what the caregiver said), Send someone else. Clicking a visit opens the **visit screen**.
+- **Caregivers** (`/caregivers`) — view only (HR keeps records): type, trained for, usual days/hours, hours booked this week, readiness. Clicking a caregiver opens their **profile screen**.
+- **Incidents** (`/incidents`) — report an incident (client, caregiver involved, type, severity, date, what happened) → goes to the Care Supervisor and opens the **incident screen**; open/resolved/closed tabs; clicking an incident opens its screen.
 - **Settings** — profile, password, Reset demo data.
 
 ## Roles still to add (from the client)

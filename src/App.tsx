@@ -10,7 +10,10 @@ import Referrals from './pages/Referrals'
 import ReferralDetail from './pages/ReferralDetail'
 import Clients from './pages/Clients'
 import ClientDetail from './pages/ClientDetail'
-import Requests from './pages/Requests'
+import Requests, { RequestDetail } from './pages/Requests'
+import VisitDetail from './pages/VisitDetail'
+import CaregiverDetail from './pages/CaregiverDetail'
+import IncidentDetail from './pages/IncidentDetail'
 import Schedule from './pages/Schedule'
 import Cover from './pages/Cover'
 import Today from './pages/Today'
@@ -42,11 +45,15 @@ export default function App() {
             <Route path="clients" element={<Clients />} />
             <Route path="clients/:id" element={<ClientDetail />} />
             <Route path="requests" element={<Requests />} />
+            <Route path="requests/:id" element={<RequestDetail />} />
+            <Route path="visits/:id" element={<VisitDetail />} />
             <Route path="schedule" element={<Schedule />} />
             <Route path="cover" element={<Cover />} />
             <Route path="today" element={<Today />} />
             <Route path="caregivers" element={<Caregivers />} />
+            <Route path="caregivers/:id" element={<CaregiverDetail />} />
             <Route path="incidents" element={<Incidents />} />
+            <Route path="incidents/:id" element={<IncidentDetail />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Route>

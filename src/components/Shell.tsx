@@ -90,8 +90,8 @@ function Header() {
     const r: { label: string; sub: string; to: string }[] = []
     s.clients.filter(c => s.inBranch(c.branch) && c.name.toLowerCase().includes(t)).forEach(c => r.push({ label: c.name, sub: `Client · ${c.status}`, to: `/clients/${c.id}` }))
     s.referrals.filter(x => s.inBranch(x.branch) && (x.name.toLowerCase().includes(t) || x.id.toLowerCase().includes(t))).forEach(x => r.push({ label: x.name, sub: `Referral ${x.id} · ${x.stage}`, to: `/referrals/${x.id}` }))
-    s.caregivers.filter(g => s.inBranch(g.branch) && g.name.toLowerCase().includes(t)).forEach(g => r.push({ label: g.name, sub: `Caregiver · ${g.readiness === 'Blocked' ? 'Not ready' : g.readiness}`, to: `/caregivers?open=${g.id}` }))
-    s.visits.filter(v => s.inBranch(v.branch) && ('#' + v.id.slice(1)).includes(t)).forEach(v => r.push({ label: 'Visit #' + v.id.slice(1), sub: `${fmtDate(v.date)} · ${v.start} · ${s.client(v.clientId)?.name}`, to: `/schedule?visit=${v.id}` }))
+    s.caregivers.filter(g => s.inBranch(g.branch) && g.name.toLowerCase().includes(t)).forEach(g => r.push({ label: g.name, sub: `Caregiver · ${g.readiness === 'Blocked' ? 'Not ready' : g.readiness}`, to: `/caregivers/${g.id}` }))
+    s.visits.filter(v => s.inBranch(v.branch) && ('#' + v.id.slice(1)).includes(t)).forEach(v => r.push({ label: 'Visit #' + v.id.slice(1), sub: `${fmtDate(v.date)} · ${v.start} · ${s.client(v.clientId)?.name}`, to: `/visits/${v.id}` }))
     return r.slice(0, 8)
   }, [q, s.clients, s.referrals, s.caregivers, s.visits])
 
@@ -136,7 +136,7 @@ function Header() {
           <div className="popover" style={{ width: 380 }}>
             <div style={{ padding: '6px 10px 8px' }} className="t-strong">New family requests</div>
             {newReq.length === 0 ? <div className="t-small t-muted" style={{ padding: '0 10px 10px' }}>No new requests.</div> : newReq.map(r => (
-              <button key={r.id} className="menu-item" style={{ alignItems: 'flex-start' }} onClick={() => go(`/requests?open=${r.id}`)}>
+              <button key={r.id} className="menu-item" style={{ alignItems: 'flex-start' }} onClick={() => go(`/requests/${r.id}`)}>
                 <Avatar name={r.from} size="sm" /><span className="grow"><span style={{ display: 'block' }}><b>{r.from}</b> about {s.client(r.clientId)?.name}</span><span className="t-caption t-muted">{r.type}</span></span>
               </button>))}
             <div className="menu-sep" /><button className="menu-item" onClick={() => go('/requests')}><MessageSquare />See all family requests</button>

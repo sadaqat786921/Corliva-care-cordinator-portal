@@ -19,11 +19,12 @@ export default function Schedule() {
   const [show, setShow] = useState('All visits')
   const [cg, setCg] = useState(params.get('caregiver') ?? 'all')
   const [cl, setCl] = useState(params.get('client') && !params.get('new') ? params.get('client')! : 'all')
-  const [openId, setOpenId] = useState<string | null>(null)
+  const nav = useNavigate()
+  const open = (v: Visit) => nav(`/visits/${v.id}?from=/schedule`)
   const [creating, setCreating] = useState<{ clientId?: string } | null>(params.get('new') ? { clientId: params.get('client') ?? undefined } : null)
   useEffect(() => {
     const vid = params.get('visit')
-    if (vid) { const v = s.visits.find(x => x.id === vid); if (v) { setOpenId(v.id); setWeek(mondayOf(new Date(v.date + 'T12:00'))) } }
+    if (vid) nav(`/visits/${vid}?from=/schedule`, { replace: true })
     if (params.get('new')) setCreating({ clientId: params.get('client') ?? undefined })
     if (params.get('caregiver')) setCg(params.get('caregiver')!)
   }, [params])
@@ -34,10 +35,9 @@ export default function Schedule() {
     (show === 'All visits' || (show === 'Needs a caregiver' ? v.status === 'Unassigned' : v.status !== 'Cancelled')) &&
     (cg === 'all' || v.caregiverId === cg) && (cl === 'all' || v.clientId === cl)), [s.visits, days.join(), show, cg, cl])
   const cgs = s.caregivers.filter(g => s.inBranch(g.branch) && (cg === 'all' || g.id === cg))
-  const open = s.visits.find(v => v.id === openId)
   const cls = (v: Visit) => v.status === 'Cancelled' ? 'cancel' : v.status === 'Unassigned' ? 'open' : v.status === 'Completed' ? 'done' : v.review || s.caregiver(v.caregiverId)?.readiness === 'Blocked' ? 'warn' : 'ok'
   const Shift = ({ v }: { v: Visit }) => (
-    <button className={`shift ${cls(v)}`} onClick={() => setOpenId(v.id)} title={`${s.client(v.clientId)?.name} ${v.start}–${v.end}`}>
+    <button className={`shift ${cls(v)}`} onClick={() => open(v)} title={`${s.client(v.clientId)?.name} ${v.start}–${v.end}`}>
       <b>{v.start}</b> {s.client(v.clientId)?.name}<div className="t-caption" style={{ opacity: .8 }}>{v.service}</div>
     </button>)
 
@@ -86,7 +86,7 @@ export default function Schedule() {
             <div className="table-wrap"><table className="tbl">
               <thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Service</th><th>Caregiver</th><th>Status</th></tr></thead>
               <tbody>{vis.slice().sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)).map(v => (
-                <tr key={v.id} className="clickable" onClick={() => setOpenId(v.id)}>
+                <tr key={v.id} className="clickable" onClick={() => open(v)}>
                   <td>{v.date === TODAY ? 'Today' : fmtDate(v.date)}</td><td>{v.start}–{v.end}</td><td className="t-medium">{s.client(v.clientId)?.name}</td><td>{v.service}</td>
                   <td>{s.caregiver(v.caregiverId)?.name ?? <span style={{ color: 'var(--status-danger)' }}>None yet</span>}</td>
                   <td><Chip tone={vTone(v)}>{v.status}</Chip>{v.review && <div className="t-caption" style={{ color: 'var(--status-warning)' }}>Needs review</div>}</td>
@@ -94,63 +94,9 @@ export default function Schedule() {
             </table></div>
           )}
       </div>
-      {open && <VisitDrawer v={open} onClose={() => { setOpenId(null); clearUrl() }} />}
       {creating && <NewVisitsModal preset={{ clientId: creating.clientId }} onClose={() => { setCreating(null); clearUrl() }} />}
     </>
   )
 }
 
 function Row({ children }: { children: React.ReactNode }) { return <>{children}</> }
-
-export function VisitDrawer({ v, onClose }: { v: Visit; onClose: () => void }) {
-  const s = useStore()
-  const nav = useNavigate()
-  const [act, setAct] = useState<null | 'assign' | 'time' | 'cancel' | 'keep'>(null)
-  const c = s.client(v.clientId)!
-  const g = s.caregiver(v.caregiverId)
-  const plan = plansFor(v.clientId, s.carePlans).current
-  const editable = v.date >= TODAY && ['Scheduled', 'Unassigned'].includes(v.status)
-  const history = s.audit.filter(a => a.record.includes('#' + v.id.slice(1)))
-  const st = v.date === TODAY ? liveState(v) : null
-  return (
-    <Drawer title={`Visit #${v.id.slice(1)}`} sub={<span className="row" style={{ gap: 8 }}><Chip tone={vTone(v)}>{v.status}</Chip>{v.date === TODAY ? 'Today' : fmtDate(v.date, { weekday: 'long', day: 'numeric', month: 'long' })}{v.series && <span className="row t-caption" style={{ gap: 4 }}><Repeat size={12} />Repeats</span>}</span>} onClose={onClose} footer={editable ? <>
-      <Button variant="danger" icon={XCircle} onClick={() => setAct('cancel')}>Cancel visit</Button>
-      <Button variant="secondary" icon={CalendarClock} onClick={() => setAct('time')}>Change time</Button>
-      <Button icon={UserPlus} onClick={() => setAct('assign')}>{v.caregiverId ? 'Change caregiver' : 'Assign caregiver'}</Button>
-    </> : <Button variant="secondary" onClick={onClose}>Close</Button>}>
-      {v.status === 'Unassigned' && <AlertBanner tone="danger" title="This visit has no caregiver">Assign someone, or the client will be missed.</AlertBanner>}
-      {g?.readiness === 'Blocked' && editable && <AlertBanner tone="danger" title={`${g.name} can’t do this visit`}>{g.issue}. Choose another caregiver.</AlertBanner>}
-      {v.review && editable && <AlertBanner tone="warning" title="Needs review" action={<Button size="sm" variant="secondary" onClick={() => setAct('keep')}>Keep as planned</Button>}>{v.review}</AlertBanner>}
-      {st === 'Late' && <AlertBanner tone="danger" title={`${g?.name} hasn’t checked in`}>Call them on {g?.phone}, or change the caregiver.</AlertBanner>}
-      {!editable && v.status !== 'Unassigned' && <AlertBanner tone="info" title={v.status === 'Cancelled' ? 'This visit was cancelled' : v.status === 'Completed' ? 'This visit is finished' : 'This visit has started'}>{v.cancelReason ? `Reason: ${v.cancelReason}. ` : ''}{v.status === 'Completed' ? 'Finished visits can’t be changed here; the Care Supervisor reviews them.' : ''}</AlertBanner>}
-      <dl className="kv">
-        <dt>Client</dt><dd><button className="link-btn" onClick={() => nav(`/clients/${c.id}`)}>{c.name}</button></dd>
-        <dt>Time</dt><dd className="row" style={{ gap: 6 }}><Clock size={13} />{v.start} – {v.end}{v.checkIn && <span className="t-caption t-muted"> · checked in {v.checkIn}{v.checkOut ? `, out ${v.checkOut}` : ''}</span>}</dd>
-        <dt>Service</dt><dd>{v.service}</dd>
-        <dt>Address</dt><dd className="row" style={{ gap: 6 }}><MapPin size={13} />{c.address || '—'}</dd>
-        <dt>Getting in</dt><dd className="row" style={{ gap: 6, alignItems: 'flex-start' }}><KeyRound size={13} style={{ marginTop: 3 }} />{c.access || '—'}</dd>
-        <dt>Caregiver</dt><dd>{g ? <span className="row" style={{ gap: 8 }}><Avatar name={g.name} size="sm" />{g.name}<span className="t-caption t-muted row" style={{ gap: 4 }}><Phone size={11} />{g.phone}</span></span> : <span style={{ color: 'var(--status-danger)' }}>Not assigned</span>}</dd>
-        {v.coverNote && <><dt>Cover note</dt><dd>{v.coverNote}</dd></>}
-      </dl>
-      {plan && <><div className="divider" /><div><div className="t-h3" style={{ marginBottom: 6 }}>Care plan tasks (version {plan.version})</div><ul style={{ margin: 0, paddingLeft: 18 }} className="t-small">{plan.tasks.map(t => <li key={t}>{t}</li>)}</ul>{plan.instructions && <div className="t-small t-secondary mt-2" style={{ whiteSpace: 'pre-wrap' }}>{plan.instructions}</div>}</div></>}
-      {history.length > 0 && <><div className="divider" /><div><div className="t-h3" style={{ marginBottom: 8 }}>Changes</div>{history.map(h => <div key={h.id} className="t-small" style={{ marginBottom: 8 }}><b>{h.action}</b> by {h.actor} · <span className="t-muted">{h.at}</span>{(h.before || h.after) && <div className="t-caption t-muted">{h.before} → {h.after}</div>}{h.reason && <div className="t-caption t-muted">Reason: {h.reason}</div>}</div>)}</div></>}
-      {act === 'assign' && <AssignModal v={v} onClose={() => setAct(null)} />}
-      {act === 'time' && <ChangeTimeModal v={v} onClose={() => setAct(null)} />}
-      {act === 'cancel' && <CancelModal v={v} onClose={() => setAct(null)} onDone={onClose} />}
-      {act === 'keep' && <KeepModal v={v} onClose={() => setAct(null)} />}
-    </Drawer>
-  )
-}
-
-/** Clear a "needs review" mark after checking the visit should still go ahead. */
-export function KeepModal({ v, onClose }: { v: Visit; onClose: () => void }) {
-  const s = useStore()
-  const [t, setT] = useState(''); const [tried, setTried] = useState(false); const bad = t.trim().length < 5
-  return <Modal title="Keep this visit as planned?" sub={v.review} onClose={onClose} footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={() => {
-    setTried(true); if (bad) return
-    s.setVisits(x => x.map(y => y.id === v.id ? { ...y, review: undefined } : y))
-    s.log({ type: 'Schedule', action: 'Checked a visit and kept it', record: `Visit #${v.id.slice(1)}`, reason: t.trim() }); s.toast('Visit kept as planned'); onClose()
-  }}>Keep visit</Button></>}>
-    <Field label="Why can it go ahead?" required error={tried && bad ? 'Please write a short note.' : undefined}><Textarea autoFocus value={t} onChange={e => setT(e.target.value)} placeholder="For example: checked with the family, she’s home by then" error={tried && bad} /></Field>
-  </Modal>
-}

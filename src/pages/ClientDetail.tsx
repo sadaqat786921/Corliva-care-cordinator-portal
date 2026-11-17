@@ -120,7 +120,7 @@ function Overview({ c, steps, go, onEdit }: { c: Client; steps: ReturnType<typeo
           <CardHead title="Upcoming visits" action={<button className="link-btn" onClick={() => go('visits')}>See all visits</button>} />
           <div className="card-body">
             {upcoming.length === 0 ? <div className="t-small t-muted">No visits planned.</div> : upcoming.map(v => (
-              <button key={v.id} className="list-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav(`/schedule?visit=${v.id}`)}>
+              <button key={v.id} className="list-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => nav(`/visits/${v.id}?from=/clients/${c.id}`)}>
                 <CalendarDays size={16} color="var(--text-muted)" />
                 <div className="grow"><div className="t-medium t-small">{v.date === TODAY ? 'Today' : fmtDate(v.date)} · {v.start}–{v.end}</div><div className="t-caption t-muted">{v.service}{v.review ? ' · needs review' : ''}</div></div>
                 {v.caregiverId ? <span className="t-small">{s.caregiver(v.caregiverId)?.name}</span> : <Chip tone="danger">No caregiver</Chip>}
@@ -466,7 +466,7 @@ function VisitsTab({ c, canPlan }: { c: Client; canPlan: { ok: boolean; why: str
         <div className="table-wrap"><table className="tbl">
           <thead><tr><th>Date</th><th>Time</th><th>Service</th><th>Caregiver</th><th>Status</th></tr></thead>
           <tbody>{list.map(v => (
-            <tr key={v.id} className="clickable" onClick={() => nav(`/schedule?visit=${v.id}`)}>
+            <tr key={v.id} className="clickable" onClick={() => nav(`/visits/${v.id}?from=/clients/${c.id}`)}>
               <td>{v.date === TODAY ? 'Today' : fmtDate(v.date)}</td><td>{v.start}–{v.end}</td><td>{v.service}</td>
               <td>{s.caregiver(v.caregiverId)?.name ?? <span style={{ color: 'var(--status-danger)' }}>None yet</span>}</td>
               <td><Chip tone={tone(v.status)}>{v.status}</Chip>{v.review && <div className="t-caption" style={{ color: 'var(--status-warning)' }}>Needs review</div>}{v.cancelReason && <div className="t-caption t-muted">{v.cancelReason}</div>}</td>

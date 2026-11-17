@@ -199,3 +199,16 @@ export function NewVisitsModal({ onClose, preset, onCreated }: { onClose: () => 
     </Modal>
   )
 }
+
+/** Clear a "needs review" mark after checking the visit should still go ahead. */
+export function KeepModal({ v, onClose }: { v: Visit; onClose: () => void }) {
+  const s = useStore()
+  const [t, setT] = useState(''); const [tried, setTried] = useState(false); const bad = t.trim().length < 5
+  return <Modal title="Keep this visit as planned?" sub={v.review} onClose={onClose} footer={<><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={() => {
+    setTried(true); if (bad) return
+    s.setVisits(x => x.map(y => y.id === v.id ? { ...y, review: undefined } : y))
+    s.log({ type: 'Schedule', action: 'Checked a visit and kept it', record: `Visit #${v.id.slice(1)}`, reason: t.trim() }); s.toast('Visit kept as planned'); onClose()
+  }}>Keep visit</Button></>}>
+    <Field label="Why can it go ahead?" required error={tried && bad ? 'Please write a short note.' : undefined}><Textarea autoFocus value={t} onChange={e => setT(e.target.value)} placeholder="For example: checked with the family, she’s home by then" error={tried && bad} /></Field>
+  </Modal>
+}

@@ -38,9 +38,9 @@ export default function Dashboard() {
 
   type Q = { icon: typeof TriangleAlert; tone: ChipTone; title: string; sub: string; chip: string; action: string; to: string }
   const queue: Q[] = [
-    ...late.map(v => ({ icon: Clock, tone: 'danger' as const, title: `${s.caregiver(v.caregiverId)?.name} hasn’t checked in at ${s.client(v.clientId)?.name}’s`, sub: `Visit started ${v.start}. Call the caregiver or find cover.`, chip: 'Late', action: 'Open', to: '/today' })),
-    ...soon.filter(c => c.kind !== 'Late check-in').map(c => ({ icon: LifeBuoy, tone: 'danger' as const, title: `${c.kind}: ${s.client(c.visit.clientId)?.name}`, sub: `${c.visit.date === TODAY ? 'Today' : fmtDate(c.visit.date)} ${c.visit.start}–${c.visit.end} · ${c.detail}`, chip: c.visit.date === TODAY ? 'Today' : c.visit.date === addDays(1) ? 'Tomorrow' : 'In 2 days', action: 'Find cover', to: `/cover?visit=${c.visit.id}` })),
-    ...newReq.map(r => ({ icon: MessageSquare, tone: 'info' as const, title: `${r.from} asked: ${r.type.toLowerCase()}`, sub: `About ${s.client(r.clientId)?.name} · ${r.date === TODAY ? 'today' : fmtDate(r.date)} ${r.time}`, chip: 'New', action: 'Reply', to: `/requests?open=${r.id}` })),
+    ...late.map(v => ({ icon: Clock, tone: 'danger' as const, title: `${s.caregiver(v.caregiverId)?.name} hasn’t checked in at ${s.client(v.clientId)?.name}’s`, sub: `Visit started ${v.start}. Call the caregiver or find cover.`, chip: 'Late', action: 'Open', to: `/visits/${v.id}?from=/` })),
+    ...soon.filter(c => c.kind !== 'Late check-in').map(c => ({ icon: LifeBuoy, tone: 'danger' as const, title: `${c.kind}: ${s.client(c.visit.clientId)?.name}`, sub: `${c.visit.date === TODAY ? 'Today' : fmtDate(c.visit.date)} ${c.visit.start}–${c.visit.end} · ${c.detail}`, chip: c.visit.date === TODAY ? 'Today' : c.visit.date === addDays(1) ? 'Tomorrow' : 'In 2 days', action: c.kind === 'Needs review' ? 'Review' : 'Find cover', to: `/visits/${c.visit.id}?from=/${c.kind === 'Needs review' ? '' : '&assign=1'}` })),
+    ...newReq.map(r => ({ icon: MessageSquare, tone: 'info' as const, title: `${r.from} asked: ${r.type.toLowerCase()}`, sub: `About ${s.client(r.clientId)?.name} · ${r.date === TODAY ? 'today' : fmtDate(r.date)} ${r.time}`, chip: 'New', action: 'Reply', to: `/requests/${r.id}` })),
     ...plansBack.map(({ c }) => ({ icon: FileText, tone: 'warning' as const, title: `Care plan sent back: ${c.name}`, sub: 'The Care Supervisor asked for changes.', chip: 'Changes requested', action: 'Fix plan', to: `/clients/${c.id}?tab=plan` })),
     ...followUps.map(r => ({ icon: PhoneCall, tone: 'warning' as const, title: `Follow up with ${r.name}`, sub: `Referral ${r.id} · ${r.stage}`, chip: 'Call back due', action: 'Open', to: `/referrals/${r.id}` })),
     ...setup.map(({ c, steps }) => ({ icon: Home, tone: 'warning' as const, title: `Finish setting up ${c.name}`, sub: `Still to do: ${steps.filter(x => !x.done).map(x => x.label.toLowerCase()).join(', ')}`, chip: `${steps.filter(x => x.done).length} of ${steps.length} done`, action: 'Continue', to: `/clients/${c.id}` })),
@@ -90,7 +90,7 @@ export default function Dashboard() {
             <div className="table-wrap"><table className="tbl">
               <thead><tr><th>Time</th><th>Client</th><th>Caregiver</th><th>Service</th><th>Right now</th></tr></thead>
               <tbody>{today.map(v => { const st = liveState(v); return (
-                <tr key={v.id} className="clickable" onClick={() => nav(`/schedule?visit=${v.id}`)}>
+                <tr key={v.id} className="clickable" onClick={() => nav(`/visits/${v.id}?from=/`)}>
                   <td>{v.start}–{v.end}</td><td className="t-medium">{s.client(v.clientId)?.name}</td>
                   <td>{s.caregiver(v.caregiverId)?.name ?? <span style={{ color: 'var(--status-danger)' }}>None yet</span>}</td><td>{v.service}</td>
                   <td><Chip tone={liveTone(st)}>{st}</Chip>{v.checkIn && <span className="t-caption t-muted"> in {v.checkIn}{v.checkOut ? ` · out ${v.checkOut}` : ''}</span>}</td>
