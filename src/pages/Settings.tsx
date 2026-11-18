@@ -23,11 +23,11 @@ export default function Settings() {
         <div style={{ padding: '0 16px' }}><Tabs value={tab} onChange={t => setParams(t === 'security' ? { tab: 'security' } : {})} tabs={[{ id: 'profile', label: 'My profile' }, { id: 'security', label: 'Password & security' }]} /></div>
         {tab === 'profile' ? (
           <div className="card-body col" style={{ gap: 16, maxWidth: 620 }}>
-            <div className="row"><span className="avatar lg">{s.me.initials}</span><div><div className="t-h3">{s.me.name}</div><div className="t-small t-muted">Agency Admin · {s.agency.name}</div></div></div>
+            <div className="row"><span className="avatar lg">{s.me.initials}</span><div><div className="t-h3">{s.me.name}</div><div className="t-small t-muted">Care Coordinator · {s.agency.name}</div></div></div>
             <Field label="Full name" required error={!f.name.trim() ? 'Please enter your name.' : undefined}><Input icon={UserRound} value={f.name} onChange={e => setF({ ...f, name: e.target.value })} error={!f.name.trim()} /></Field>
             <Field label="Phone"><Input icon={Phone} value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} /></Field>
             <Field label="Email" helper="Your sign-in email can’t be changed here. Ask CORLIVA support if it needs to change."><Input icon={Mail} value={s.me.email} disabled /></Field>
-            <Field label="Role" helper="Another Agency Admin can change your role."><Input value="Agency Admin" disabled /></Field>
+            <Field label="Role and branch" helper="The Agency Admin can change your role or branch."><Input value="Care Coordinator · North Branch" disabled /></Field>
             <div className="row" style={{ justifyContent: 'flex-end' }}>
               <Button variant="secondary" disabled={!dirty} onClick={() => setF({ name: s.me.name, phone: s.me.phone })}>Undo</Button>
               <Button disabled={!dirty || !f.name.trim()} onClick={() => { const name = f.name.trim(); s.setMe({ ...s.me, name, phone: f.phone, initials: name.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() }); s.toast('Profile saved') }}>Save changes</Button>
