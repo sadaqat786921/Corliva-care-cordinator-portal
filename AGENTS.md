@@ -87,8 +87,8 @@ Every record opens on its **own full screen** with a back link to where you came
 - **Incidents** (`/incidents`) — report an incident (client, caregiver involved, type, severity, date, what happened) → goes to the Care Supervisor and opens the **incident screen**; open/resolved/closed tabs; clicking an incident opens its screen.
 - **Settings** — profile, password, Reset demo data.
 
-## Roles still to add (from the client)
-- **Director of Nursing** — senior nurse role overseeing care quality (approves care plans/assessments, clinical incidents, clinical overrides). Waiting for the client to confirm scope (do they have nurses; is a caregiver "type" field needed). Not built yet.
+## Other roles
+- **Director of Nursing** — built in its own portal: `sadaqat786921/Corliva-don-portal` (can do everything a Care Supervisor does, for the whole agency, plus clients' health, quality and risk, staff reviews and training).
 
 ## Run
 ```
